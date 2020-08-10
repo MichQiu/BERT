@@ -49,15 +49,16 @@ class MultiHeadAttention(nn.Module):
             mask = mask.unsqueeze(1)
 
         # (B, H, S, W) * (B, H, W, S) -> (B, H, S, S) -softmax-> (B, H, S, S) * (B, H, S, W) -> (B, H, S, W)
-        b, attn = self.attention(q, k, v, mask=mask)
+        q, attn = self.attention(q, k, v, mask=mask)
+        q = self.dropout(q)
         # (B, H, S, W) -trans-> (B, S, H, W) -view-> (B, S, W)
-        b = b.transpose(1, 2).contiguous().view(batch_size, len_q, self.h * self.d_k)
-        b = self.dropout(self.fc(q))
-        b += residual
+        q = q.transpose(1, 2).contiguous().view(batch_size, len_q, self.h * self.d_k)
+        q = self.fc(q))
+        q += residual
 
-        b = self.layer_norm(b)
+        q = self.layer_norm(q)
 
-        return b, attn
+        return q, attn
 
 
 class PositionWiseFeedForward(nn.Module):
